@@ -12,9 +12,8 @@
     {
       "binding": "DB",
       "database_name": "karinca",
-      // Para desplegar: `npx wrangler d1 create karinca` y pega aquí el id que devuelve.
-      // En local no importa el valor.
-      "database_id": "00000000-0000-0000-0000-000000000000",
+      // Id de la base creada con `npx wrangler d1 create karinca`. No es secreto.
+      "database_id": "c1196a39-b571-4b63-84a0-3cf29c198cdf",
       "migrations_dir": "db/migrations"
     }
   ],

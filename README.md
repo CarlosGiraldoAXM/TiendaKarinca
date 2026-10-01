@@ -93,7 +93,7 @@ La app no tiene login: **quien llegue a la URL puede ver y cambiar todo**, así 
 4. En Authentication deja activo **One-time PIN** (viene por defecto).
 5. Session duration: `1 month` es cómodo para usarla desde el celular.
 
-**Cierra las otras puertas.** El Worker también responde en `karinca.<cuenta>.workers.dev` y en las URLs de preview, que no pasan por la política anterior. En el Worker, Settings → Domains & Routes: desactiva `workers.dev` y las Preview URLs, o actívales Cloudflare Access desde ahí mismo.
+**Cierra las otras puertas.** El Worker también responde en `tiendakarinca.<cuenta>.workers.dev` y en las URLs de preview, que no pasan por la política anterior. En el Worker, Settings → Domains & Routes: desactiva `workers.dev` y las Preview URLs, o actívales Cloudflare Access desde ahí mismo.
 
 ## Decisiones tomadas
 

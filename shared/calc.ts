@@ -1,4 +1,4 @@
-// Lógica de cálculo pura. Es la referencia de las vistas SQL (supabase/migrations/0003_vistas.sql)
+// Lógica de cálculo pura. Es la referencia de las vistas SQL (db/migrations/0003_vistas.sql)
 // y la usa el frontend para las vistas previas en vivo. Sin redondeos: solo se formatea en pantalla.
 
 export interface ItemCompra {

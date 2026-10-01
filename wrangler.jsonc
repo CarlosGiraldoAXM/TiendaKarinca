@@ -8,8 +8,15 @@
     "not_found_handling": "single-page-application",
     "run_worker_first": ["/api/*"]
   },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "karinca",
+      // Para desplegar: `npx wrangler d1 create karinca` y pega aquí el id que devuelve.
+      // En local no importa el valor.
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "db/migrations"
+    }
+  ],
   "observability": { "enabled": true }
-  // Secrets (no van aquí): SUPABASE_URL y SUPABASE_SERVICE_ROLE_KEY
-  //   npx wrangler secret put SUPABASE_URL
-  //   npx wrangler secret put SUPABASE_SERVICE_ROLE_KEY
 }

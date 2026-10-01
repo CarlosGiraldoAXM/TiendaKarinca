@@ -1,9 +1,7 @@
 node_modules
 dist
 .wrangler
+*.tsbuildinfo
+.DS_Store
 .dev.vars
 .env
-*.tsbuildinfo
-supabase/.temp
-supabase/.branches
-.DS_Store

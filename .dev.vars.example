@@ -1,0 +1,4 @@
+# Copia este archivo como .dev.vars y completa los valores.
+# Local (supabase start): la URL es http://127.0.0.1:54321 y la clave sale de `npx supabase status`.
+SUPABASE_URL=http://127.0.0.1:54321
+SUPABASE_SERVICE_ROLE_KEY=

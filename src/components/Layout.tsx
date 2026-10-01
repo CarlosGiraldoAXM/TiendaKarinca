@@ -35,10 +35,10 @@ export function Layout() {
     <div className="min-h-dvh md:pl-60">
       {/* Escritorio: barra lateral */}
       <aside className="no-print fixed inset-y-0 left-0 hidden w-60 flex-col border-r border-borde bg-papel p-4 md:flex">
-        <Link to="/" className="mb-6 flex items-center gap-3 px-2 py-1">
-          <span className="grid size-10 place-items-center rounded-xl bg-marca font-display text-xl font-semibold text-white">K</span>
+        <Link to="/" className="mb-6 flex items-center gap-2.5 px-1 py-1">
+          <span className="grid h-10 shrink-0 place-items-center rounded-xl bg-marca px-2 font-display text-base font-semibold tracking-tight text-white">K&amp;L</span>
           <span>
-            <span className="block font-display text-lg font-semibold leading-tight">Karinca</span>
+            <span className="block whitespace-nowrap font-display text-base font-semibold leading-tight">Karinca &amp; Laura</span>
             <span className="block text-xs text-suave">Inventario y ventas</span>
           </span>
         </Link>

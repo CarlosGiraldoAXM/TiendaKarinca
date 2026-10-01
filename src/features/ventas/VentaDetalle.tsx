@@ -60,7 +60,7 @@ export function VentaDetalle() {
         <Card className={cn("p-5 md:p-7 print:border-0 print:p-0 print:shadow-none", v.estado === "anulada" && "opacity-70")}>
           <div className="flex items-start justify-between gap-4 border-b border-borde pb-4">
             <div>
-              <div className="font-display text-2xl font-semibold">Karinca</div>
+              <div className="font-display text-2xl font-semibold">Karinca &amp; Laura</div>
               <div className="text-sm text-suave">Comprobante de venta</div>
             </div>
             <div className="text-right">

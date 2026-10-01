@@ -1,10 +1,10 @@
-import { Check, Merge, Pencil, Trash2, X } from "lucide-react";
+import { Check, Merge, Pencil, Plus, Trash2, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { precioSugerido } from "@shared/calc";
 import type { Tienda } from "@shared/types";
 import { NumeroInput } from "@/components/NumeroInput";
 import { Button, Card, Confirmar, Dialogo, Encabezado, ErrorCarga, Input, ListaSkeleton, Select } from "@/components/ui";
-import { useBorrarTienda, useConfig, useFusionarTiendas, useGuardarConfig, useRenombrarTienda, useTiendas } from "@/lib/api";
+import { useBorrarTienda, useConfig, useCrearTienda, useFusionarTiendas, useGuardarConfig, useRenombrarTienda, useTiendas } from "@/lib/api";
 import { cop } from "@/lib/format";
 
 export function Configuracion() {
@@ -68,6 +68,8 @@ function Tiendas() {
   const renombrar = useRenombrarTienda();
   const fusionar = useFusionarTiendas();
   const borrar = useBorrarTienda();
+  const crear = useCrearTienda();
+  const [nueva, setNueva] = useState("");
   const [editando, setEditando] = useState<{ id: string; nombre: string } | null>(null);
   const [fusion, setFusion] = useState<{ origen: Tienda; destino: string } | null>(null);
   const [aBorrar, setABorrar] = useState<Tienda | null>(null);
@@ -83,10 +85,24 @@ function Tiendas() {
   return (
     <Card className="p-4 md:p-5">
       <h2 className="font-display text-lg font-semibold">Tiendas</h2>
-      <p className="mt-1 text-sm text-suave">Cambia un nombre o junta dos tiendas que en realidad son la misma.</p>
+      <p className="mt-1 text-sm text-suave">Agrega una tienda, cámbiale el nombre o junta dos que en realidad son la misma.</p>
+
+      <form
+        className="mt-4 flex gap-2"
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (nueva.trim()) crear.mutate(nueva.trim(), { onSuccess: () => setNueva("") });
+        }}
+      >
+        <Input value={nueva} onChange={(e) => setNueva(e.target.value)} placeholder="Nueva tienda…" aria-label="Nombre de la nueva tienda" autoComplete="off" />
+        <Button type="submit" cargando={crear.isPending} disabled={!nueva.trim()}>
+          {!crear.isPending && <Plus className="size-5" aria-hidden />}
+          Agregar
+        </Button>
+      </form>
 
       {!tiendas.data.length ? (
-        <p className="mt-4 rounded-xl bg-arena/70 px-3.5 py-3 text-sm text-suave">Las tiendas se crean al cargar una compra.</p>
+        <p className="mt-4 rounded-xl bg-arena/70 px-3.5 py-3 text-sm text-suave">Aún no hay tiendas. Agrega la primera aquí arriba, o créala al cargar una compra.</p>
       ) : (
         <ul className="mt-3 divide-y divide-borde/70">
           {tiendas.data.map((t) => (

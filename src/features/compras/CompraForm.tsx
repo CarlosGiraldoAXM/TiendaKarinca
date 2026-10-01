@@ -134,7 +134,7 @@ function Formulario({ id, inicial }: { id?: string; inicial: Form }) {
       </Encabezado>
 
       <Card className="mb-5 grid gap-4 p-4 sm:grid-cols-3 md:p-5">
-        <Campo etiqueta="Tienda" error={errors.tienda_id && "Elige o crea una tienda"}>
+        <Campo etiqueta="Tienda" error={errors.tienda_id && "Elige o crea una tienda"} ayuda="Si es nueva, escribe su nombre para crearla">
           <Controller
             control={control}
             name="tienda_id"
@@ -146,7 +146,8 @@ function Formulario({ id, inicial }: { id?: string; inicial: Form }) {
                 onCrear={(nombre) => crearTienda.mutate(nombre, { onSuccess: (t) => setValue("tienda_id", t.id, { shouldDirty: true }) })}
                 placeholder="Elige una tienda"
                 buscarPlaceholder="Buscar o crear tienda…"
-                vacio="Escribe el nombre para crearla"
+                vacio="Aún no hay tiendas"
+                pistaCrear="¿Tienda nueva? Escribe su nombre arriba y elige «Crear»."
                 invalido={!!errors.tienda_id}
               />
             )}

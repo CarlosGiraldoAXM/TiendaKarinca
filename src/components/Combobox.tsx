@@ -29,6 +29,7 @@ export function Combobox({
   invalido,
   mantenerAbierto,
   disparador,
+  pistaCrear,
 }: {
   opciones: Opcion[];
   valor?: string | null;
@@ -41,6 +42,8 @@ export function Combobox({
   /** No cierra al elegir: útil para agregar varios productos seguidos. */
   mantenerAbierto?: boolean;
   disparador?: ReactNode;
+  /** Texto fijo al pie de la lista que explica cómo crear una opción nueva. */
+  pistaCrear?: string;
 }) {
   const [abierto, setAbierto] = useState(false);
   const [q, setQ] = useState("");
@@ -119,6 +122,12 @@ export function Combobox({
                 </Command.Item>
               )}
             </Command.List>
+            {pistaCrear && !puedeCrear && (
+              <div className="flex items-center gap-2 border-t border-borde bg-arena/50 px-4 py-2.5 text-sm text-suave">
+                <Plus className="size-4 shrink-0" aria-hidden />
+                {pistaCrear}
+              </div>
+            )}
           </Command>
         </Popover.Content>
       </Popover.Portal>

@@ -1,35 +1,40 @@
 import { fusionSchema, tiendaSchema } from "../../shared/schemas";
-import { cuerpo, datos, idValido, nuevaRuta } from "../lib";
+import { ApiError, NO_ENCONTRADO } from "../errores";
+import { cuerpo, ejecutar, filas, idValido, nuevaRuta } from "../lib";
+import { fusionarTiendas } from "../operaciones";
 
 const DUPLICADA = { duplicado: "Ya existe una tienda con ese nombre." };
 
 export const tiendas = nuevaRuta()
-  .get("/", async (c) => {
-    const filas = await datos<{ id: string; nombre: string; compras: { count: number }[] }[]>(
-      c.var.db.from("tiendas").select("id, nombre, compras(count)").order("nombre"),
-    );
-    return c.json(filas.map((t) => ({ id: t.id, nombre: t.nombre, num_compras: t.compras[0]?.count ?? 0 })));
-  })
+  .get("/", async (c) =>
+    c.json(
+      await filas(
+        c.env.DB,
+        `SELECT t.id, t.nombre, (SELECT count(*) FROM compras WHERE tienda_id = t.id) AS num_compras
+         FROM tiendas t ORDER BY t.nombre COLLATE NOCASE`,
+      ),
+    ),
+  )
   .post("/", cuerpo(tiendaSchema), async (c) => {
-    const t = await datos(c.var.db.from("tiendas").insert(c.req.valid("json")).select("id, nombre").single(), DUPLICADA);
+    const t = { id: crypto.randomUUID(), nombre: c.req.valid("json").nombre };
+    await ejecutar(c.env.DB, DUPLICADA, "INSERT INTO tiendas (id, nombre) VALUES (?, ?)", t.id, t.nombre);
     return c.json(t, 201);
   })
   .patch("/:id", cuerpo(tiendaSchema), async (c) => {
-    const t = await datos(
-      c.var.db.from("tiendas").update(c.req.valid("json")).eq("id", idValido(c.req.param("id"))).select("id, nombre").single(),
-      DUPLICADA,
-    );
+    const t = { id: idValido(c.req.param("id")), nombre: c.req.valid("json").nombre };
+    if (!(await ejecutar(c.env.DB, DUPLICADA, "UPDATE tiendas SET nombre = ? WHERE id = ?", t.nombre, t.id))) throw new ApiError(404, NO_ENCONTRADO);
     return c.json(t);
   })
   .post("/:id/fusionar", cuerpo(fusionSchema), async (c) => {
-    await datos(
-      c.var.db.rpc("fusionar_tiendas", { p_origen: idValido(c.req.param("id")), p_destino: c.req.valid("json").destino_id }),
-    );
+    await fusionarTiendas(c.env.DB, idValido(c.req.param("id")), c.req.valid("json").destino_id);
     return c.json({ ok: true });
   })
   .delete("/:id", async (c) => {
-    await datos(c.var.db.from("tiendas").delete().eq("id", idValido(c.req.param("id"))), {
-      enUso: "Esta tienda tiene compras. Fusiónala con otra en lugar de borrarla.",
-    });
+    await ejecutar(
+      c.env.DB,
+      { enUso: "Esta tienda tiene compras. Fusiónala con otra en lugar de borrarla." },
+      "DELETE FROM tiendas WHERE id = ?",
+      idValido(c.req.param("id")),
+    );
     return c.json({ ok: true });
   });

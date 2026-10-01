@@ -1,50 +1,21 @@
 import { envioSchema } from "../../shared/schemas";
-import { cuerpo, datos, idValido, nuevaRuta, suma } from "../lib";
-
-interface FilaEnvio {
-  id: string;
-  fecha: string;
-  descripcion: string | null;
-  valor_usd: number;
-  valor_cop: number;
-  notas: string | null;
-  envio_items: { unidades: number }[];
-}
-
-const SELECT = "id, fecha, descripcion, valor_usd, valor_cop, notas, envio_items(unidades)";
-
-const resumir = ({ envio_items, ...e }: FilaEnvio) => ({
-  ...e,
-  num_items: envio_items.length,
-  unidades: suma(envio_items, (i) => i.unidades),
-});
+import { ApiError, NO_ENCONTRADO } from "../errores";
+import { cuerpo, ejecutar, fila, filas, idValido, nuevaRuta } from "../lib";
+import { guardarEnvio } from "../operaciones";
 
 export const envios = nuevaRuta()
-  .get("/", async (c) => {
-    const filas = await datos<FilaEnvio[]>(
-      c.var.db.from("envios").select(SELECT).order("fecha", { ascending: false }).order("created_at", { ascending: false }),
-    );
-    return c.json(filas.map(resumir));
-  })
+  .get("/", async (c) => c.json(await filas(c.env.DB, "SELECT * FROM v_envios_resumen ORDER BY fecha DESC, created_at DESC")))
   .get("/:id", async (c) => {
     const id = idValido(c.req.param("id"));
     const [envio, lineas] = await Promise.all([
-      datos<FilaEnvio>(c.var.db.from("envios").select(SELECT).eq("id", id).single()),
-      datos(c.var.db.from("v_envio_detalle").select("*").eq("envio_id", id).order("tienda").order("nombre")),
+      fila<object>(c.env.DB, "SELECT * FROM v_envios_resumen WHERE id = ?", id),
+      filas(c.env.DB, "SELECT * FROM v_envio_detalle WHERE envio_id = ? ORDER BY tienda COLLATE NOCASE, nombre COLLATE NOCASE", id),
     ]);
-    return c.json({ ...resumir(envio), lineas });
+    return c.json({ ...envio, lineas });
   })
-  .post("/", cuerpo(envioSchema), async (c) => {
-    const id = await datos<string>(c.var.db.rpc("guardar_envio", { p: c.req.valid("json") }));
-    return c.json({ id }, 201);
-  })
-  .put("/:id", cuerpo(envioSchema), async (c) => {
-    const id = await datos<string>(
-      c.var.db.rpc("guardar_envio", { p: { ...c.req.valid("json"), id: idValido(c.req.param("id")) } }),
-    );
-    return c.json({ id });
-  })
+  .post("/", cuerpo(envioSchema), async (c) => c.json({ id: await guardarEnvio(c.env.DB, c.req.valid("json")) }, 201))
+  .put("/:id", cuerpo(envioSchema), async (c) => c.json({ id: await guardarEnvio(c.env.DB, c.req.valid("json"), idValido(c.req.param("id"))) }))
   .delete("/:id", async (c) => {
-    await datos(c.var.db.from("envios").delete().eq("id", idValido(c.req.param("id"))));
+    if (!(await ejecutar(c.env.DB, undefined, "DELETE FROM envios WHERE id = ?", idValido(c.req.param("id"))))) throw new ApiError(404, NO_ENCONTRADO);
     return c.json({ ok: true });
   });

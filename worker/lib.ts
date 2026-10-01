@@ -1,36 +1,52 @@
+import type { D1Database, D1PreparedStatement } from "@cloudflare/workers-types";
 import { zValidator } from "@hono/zod-validator";
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { Hono } from "hono";
 import type { ZodTypeAny } from "zod";
-import { ApiError, traducir } from "./errores";
+import { ApiError, NO_ENCONTRADO, traducir } from "./errores";
 
-export type AppEnv = {
-  Bindings: { SUPABASE_URL: string; SUPABASE_SERVICE_ROLE_KEY: string };
-  Variables: { db: SupabaseClient };
-};
+export type AppEnv = { Bindings: { DB: D1Database } };
 
 export const nuevaRuta = () => new Hono<AppEnv>();
 
-/** Cliente con service role: solo vive en el Worker, nunca llega al navegador. */
-export function crearDb(env: AppEnv["Bindings"]): SupabaseClient {
-  if (!env.SUPABASE_URL || !env.SUPABASE_SERVICE_ROLE_KEY)
-    throw new ApiError(500, "Falta configurar la conexión a la base de datos (SUPABASE_URL y SUPABASE_SERVICE_ROLE_KEY).");
-  return createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
+type Contexto = Parameters<typeof traducir>[1];
+type Param = string | number | null;
+
+/** Todas las filas de una consulta. */
+export async function filas<T>(db: D1Database, sql: string, ...params: Param[]): Promise<T[]> {
+  try {
+    return (await db.prepare(sql).bind(...params).all<T>()).results;
+  } catch (e) {
+    throw traducir(e);
+  }
 }
 
-type Resultado = { data: unknown; error: { code?: string; message: string; details?: string | null } | null };
-
-/**
- * Devuelve `data` o lanza el error ya traducido.
- * El cliente no tiene tipos generados de la base, así que la forma de la fila la declara quien llama.
- */
-export async function datos<T = unknown>(consulta: PromiseLike<Resultado>, contexto?: Parameters<typeof traducir>[1]): Promise<T> {
-  const { data, error } = await consulta;
-  if (error) throw traducir(error, contexto);
-  return data as T;
+/** Una fila, o 404 si no existe. */
+export async function fila<T>(db: D1Database, sql: string, ...params: Param[]): Promise<T> {
+  const [f] = await filas<T>(db, sql, ...params);
+  if (!f) throw new ApiError(404, NO_ENCONTRADO);
+  return f;
 }
+
+/** Una sola escritura. Devuelve cuántas filas cambió. */
+export async function ejecutar(db: D1Database, contexto: Contexto, sql: string, ...params: Param[]): Promise<number> {
+  try {
+    return (await db.prepare(sql).bind(...params).run()).meta.changes;
+  } catch (e) {
+    throw traducir(e, contexto);
+  }
+}
+
+/** Varias escrituras en un lote atómico: o se guardan todas o ninguna. */
+export async function lote(db: D1Database, sentencias: D1PreparedStatement[], contexto?: Contexto): Promise<void> {
+  try {
+    await db.batch(sentencias);
+  } catch (e) {
+    throw traducir(e, contexto);
+  }
+}
+
+/** Dinero a centavos enteros, que es como se guarda (ver db/migrations/0001_esquema.sql). */
+export const centavos = (n: number) => Math.round(n * 100);
 
 /** Valida el cuerpo JSON con un esquema de shared/schemas.ts y responde 400 con el primer problema. */
 export const cuerpo = <T extends ZodTypeAny>(schema: T) =>
@@ -40,7 +56,7 @@ export const cuerpo = <T extends ZodTypeAny>(schema: T) =>
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export function idValido(id: string): string {
-  if (!UUID.test(id)) throw new ApiError(404, "No encontramos ese registro.");
+  if (!UUID.test(id)) throw new ApiError(404, NO_ENCONTRADO);
   return id;
 }
 

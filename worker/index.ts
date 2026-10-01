@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { ApiError } from "./errores";
-import { crearDb, type AppEnv } from "./lib";
+import type { AppEnv } from "./lib";
 import { clientes } from "./routes/clientes";
 import { compras } from "./routes/compras";
 import { config } from "./routes/config";
@@ -13,7 +13,6 @@ import { ventas } from "./routes/ventas";
 const api = new Hono<AppEnv>().basePath("/api");
 
 api.use("*", async (c, next) => {
-  c.set("db", crearDb(c.env));
   await next();
   // Los datos cambian todo el tiempo y son privados: que nada quede en caché.
   c.header("Cache-Control", "no-store");
